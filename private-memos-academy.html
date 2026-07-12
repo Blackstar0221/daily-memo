@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Private Memos & Academy Schedule</title>
+  <style>
+    :root {
+      --bg: #0b0b0c;
+      --panel: #141417;
+      --panel2: #1b1b20;
+      --border: #2a2a32;
+      --text: #f2f2f5;
+      --muted: #9a9aa8;
+      --accent: #7c9cff;
+      --accent2: #a78bfa;
+      --danger: #ff6b7a;
+      --ok: #6ee7a8;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      --glow: rgba(124,156,255,.18);
+    }
+
+    /* Rainbow themes */
+    body.theme-red {
+      --accent: #ff4d6d;
+      --accent2: #ff8fa3;
+      --glow: rgba(255,77,109,.20);
+    }
+    body.theme-orange {
+      --accent: #ff8c42;
+      --accent2: #ffb347;
+      --glow: rgba(255,140,66,.20);
+    }
+    body.theme-yellow {
+      --accent: #f5d76e;
+      --accent2: #ffe566;
+      --glow: rgba(245,215,110,.18);
+    }
+    body.theme-green {
+      --accent: #3ddc97;
+      --accent2: #7dffa8;
+      --glow: rgba(61,220,151,.18);
+    }
+    body.theme-blue {
+      --accent: #4ea8ff;
+      --accent2: #7cc4ff;
+      --glow: rgba(78,168,255,.20);
+    }
+    body.theme-indigo {
+      --accent: #6c63ff;
+      --accent2: #9b95ff;
+      --glow: rgba(108,99,255,.22);
+    }
+    body.theme-violet {
+      --accent: #c084fc;
+      --accent2: #e9d5ff;
+      --glow: rgba(192,132,252,.22);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, var(--glow), transparent 50%),
+        radial-gradient(900px 500px at 100% 0%, rgba(255,255,255,.04), transparent 45%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      transition: background .25s ease;
+    }
+
+    button, input, textarea, select { font: inherit; color: inherit; }
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 16px 40px;
+    }
+
+    .top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .brand { display: flex; flex-direction: column; gap: 2px; }
+    .brand h1 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+    }
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: rgba(255,255,255,.03);
+      border: 1px solid var(--border);
+      padding: 6px;
+      border-radius: 999px;
+    }
+
+    .tab {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+    .tab:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .tab.active {
+      color: #0b0b0c;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      font-weight: 700;
+    }
+
+    .panel { display: none; animation: fade .18s ease; }
+    .panel.active { display: block; }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 14px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.02), transparent 40%), var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .field label {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="time"],
+    input[type="search"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px 12px;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: color-mix(in srgb, var(--accent) 70%, white);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--panel2);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: .15s ease;
+    }
+    .btn:hover { border-color: #3d3d48; background: #22222a; }
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: 0;
+      color: #0b0b0c;
+      font-weight: 700;
+    }
+    .btn.ghost { background: transparent; }
+    .btn.danger {
+      background: rgba(255,107,122,.12);
+      border-color: rgba(255,107,122,.35);
+      color: #ffb3bb;
+    }
+    .btn.small { padding: 7px 10px; border-radius: 10px; font-size: 0.88rem; }
+
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    .spacer { flex: 1; }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 62vh;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .item {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .item.selected,
+    .slot.selected {
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent);
+    }
+
+    .item-top {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+    .item h3 {
+      margin: 0 0 4px;
+      font-size: 1rem;
+      word-break: break-word;
+    }
+    .item p {
+      margin: 0;
+      color: var(--muted);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .meta {
+      font-size: 0.78rem;
+      color: #7f7f8f;
+      margin-top: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 16%, transparent);
+      color: #f2f2f5;
+      font-size: 0.75rem;
+      border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    }
+
+    .schedule-day { margin-bottom: 14px; }
+    .schedule-day h3 {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+      color: var(--accent2);
+    }
+
+    .slot {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+    .slot .time {
+      font-variant-numeric: tabular-nums;
+      color: #c9c9d6;
+      font-size: 0.86rem;
+      white-space: nowrap;
+    }
+    .slot .title {
+      font-weight: 600;
+      word-break: break-word;
+    }
+    .slot .note {
+      grid-column: 1 / -1;
+      color: var(--muted);
+      font-size: 0.88rem;
+      white-space: pre-wrap;
+    }
+    .slot.now {
+      border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 12%, transparent);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .stat {
+      background: var(--panel2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+    .stat b { display: block; font-size: 1.15rem; }
+    .stat span { color: var(--muted); font-size: 0.78rem; }
+
+    #lockScreen {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(800px 400px at 50% 0%, var(--glow), transparent 55%),
+        #070708;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 16px;
+    }
+    #lockScreen.show { display: flex; }
+
+    .lock-box {
+      width: min(420px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+    .lock-box h1 { margin: 0 0 6px; font-size: 1.3rem; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%) translateY(20px);
+      background: #22222b;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .2s ease;
+      z-index: 60;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .empty {
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    .split-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .split-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .theme-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    .theme-btn {
+      border: 2px solid transparent;
+      border-radius: 12px;
+      height: 44px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .theme-btn span {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #0b0b0c;
+      text-shadow: 0 1px 0 rgba(255,255,255,.25);
+    }
+    .theme-btn.active {
+      border-color: #fff;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.15);
+      transform: scale(1.04);
+    }
+    .theme-red { background: linear-gradient(135deg, #ff4d6d, #ff8fa3); }
+    .theme-orange { background: linear-gradient(135deg, #ff8c42, #ffb347); }
+    .theme-yellow { background: linear-gradient(135deg, #f5d76e, #ffe566); }
+    .theme-green { background: linear-gradient(135deg, #3ddc97, #7dffa8); }
+    .theme-blue { background: linear-gradient(135deg, #4ea8ff, #7cc4ff); }
+    .theme-indigo { background: linear-gradient(135deg, #6c63ff, #9b95ff); }
+    .theme-violet { background: linear-gradient(135deg, #c084fc, #e9d5ff); }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .switch-row:last-child { border-bottom: 0; }
+
+    @media (max-width: 560px) {
+      .split-2, .split-3 { grid-template-columns: 1fr; }
+      .slot { grid-template-columns: 1fr auto; }
+      .slot .time { grid-column: 1 / -1; }
+      .theme-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+  </style>
+</head>
+<body class="theme-indigo">
+  <div id="lockScreen">
+    <div class="lock-box">
+      <h1>🔒 Private Space</h1>
+      <p class="muted" style="margin:0 0 14px;">Enter your PIN to open memos & academy schedule.</p>
+      <div class="field">
+        <label for="pinInput">PIN</label>
+        <input id="pinInput" type="password" inputmode="numeric" autocomplete="off" placeholder="Enter PIN" />
+      </div>
+      <div class="row">
+        <button class="btn primary" id="unlockBtn" style="flex:1;">Unlock</button>
+      </div>
+      <p class="muted" style="margin:12px 0 0; font-size:.82rem;">
+        Tip: everything is saved only on this device (localStorage).
+      </p>
+    </div>
+  </div>
+
+  <div class="app" id="app" hidden>
+    <div class="top">
+      <div class="brand">
+        <h1>📓 Private Memos & Academy</h1>
+        <p>Jot notes. Track class times. Data stays on this device.</p>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="memos">Memos</button>
+        <button class="tab" data-tab="schedule">Schedule</button>
+        <button class="tab" data-tab="settings">Settings</button>
+      </div>
+    </div>
+
+    <!-- MEMOS -->
+    <section class="panel active" id="panel-memos">
+      <div class="grid">
+        <div class="card">
+          <h2 id="memoFormTitle">New memo</h2>
+          <div class="field">
+            <label for="memoTitle">Title</label>
+            <input id="memoTitle" type="text" placeholder="e.g. Math homework plan" />
+          </div>
+          <div class="field">
+            <label for="memoBody">Memo</label>
+            <textarea id="memoBody" placeholder="Write anything here..."></textarea>
+          </div>
+          <div class="field">
+            <label for="memoTag">Tag (optional)</label>
+            <input id="memoTag" type="text" placeholder="school, homework, ideas..." />
+          </div>
+          <div class="row">
+            <button class="btn primary" id="saveMemoBtn">Save memo</button>
+            <button class="btn ghost" id="clearMemoBtn">Clear</button>
+            <span class="spacer"></span>
+            <span class="muted" id="memoEditHint"></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row" style="margin-bottom:10px;">
+            <h2 style="margin:0;">Your memos</h2>
+            <span class="spacer"></span>
+            <input id="memoSearch" type="search" placeholder="Search..." style="max-width:180px;" />
+          </div>
+          <div class="stats">
+            <div class="stat"><b id="statMemos">0</b><span>memos</span></div>
+            <div class="stat"><b id="statTags">0</b><span>tags</span></div>
+            <div class="stat"><b id="statToday">0</b><span>today</span></div>
+          </div>
+          <div class="list" id="memoList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section class="panel" id="panel-schedule">
+      <div class="grid">
+        <div class="card">
+          <h2>Add academy / class time</h2>
+          <div class="field">
+            <label for="slotDay">Day</label>
+            <select id="slotDay">
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+              <option>Saturday</option>
+              <option>Sunday</option>
+            </select>
+          </div>
+          <div class="split-2">
+            <div class="field">
+              <label for="slotStart">Start time</label>
+              <input id="slotStart" type="time" value="17:00" />
+            </div>
+            <div class="field">
+              <label for="slotEnd">End time</label>
+              <input id="slotEnd" type="time" value="18:00" />
+            </div>
+          </div>
+          <p class="muted" style="margin:-2px 0 10px;">Shows like <b>5:00 PM ~ 6:00 PM</b></p>
+          <div class="field">
+            <label for="slotTitle">Class / activity</label>
+            <input id="slotTitle" type="text" placeholder="English, Math, Science..." />
+          </div>
+          <div class="field">
+            <label for="slotNote">Note (optional)</label>
+            <textarea id="slotNote" placeholder="Room, teacher, what to bring..." style="min-height:80px;"></textarea>
+          </div>
+          <div class="row">
+            <button class="btn primary" id="saveSlotBtn">Add to schedule</button>
+            <button class="btn ghost" id="clearSlotBtn">Clear</button>
+            <span class="spacer"></span>
+            <span class="muted" id="slotEditHint"></span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row" style="margin-bottom:10px;">
+            <h2 style="margin:0;">Weekly schedule</h2>
+            <span class="spacer"></span>
+            <button class="btn small" id="jumpTodayBtn">Jump to today</button>
+            <button class="btn small" id="testNotifyBtn">Test notify</button>
+          </div>
+          <div class="stats">
+            <div class="stat"><b id="statSlots">0</b><span>slots</span></div>
+            <div class="stat"><b id="statDays">0</b><span>active days</span></div>
+            <div class="stat"><b id="statNext">—</b><span>next up</span></div>
+          </div>
+          <div id="scheduleList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="panel" id="panel-settings">
+      <div class="grid">
+        <div class="card">
+          <h2>🌈 Rainbow theme</h2>
+          <p class="muted" style="margin-top:0;">Pick a color for buttons, accents, and glow.</p>
+          <div class="theme-grid" id="themeGrid">
+            <button type="button" class="theme-btn theme-red" data-theme="red" title="Red"><span>Red</span></button>
+            <button type="button" class="theme-btn theme-orange" data-theme="orange" title="Orange"><span>Orange</span></button>
+            <button type="button" class="theme-btn theme-yellow" data-theme="yellow" title="Yellow"><span>Yellow</span></button>
+            <button type="button" class="theme-btn theme-green" data-theme="green" title="Green"><span>Green</span></button>
+            <button type="button" class="theme-btn theme-blue" data-theme="blue" title="Blue"><span>Blue</span></button>
+            <button type="button" class="theme-btn theme-indigo" data-theme="indigo" title="Indigo"><span>Indigo</span></button>
+            <button type="button" class="theme-btn theme-violet" data-theme="violet" title="Violet"><span>Violet</span></button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>🔔 Notifications</h2>
+          <p class="muted" style="margin-top:0;">
+            When you open this site (local or deployed), it can notify you about today’s classes and upcoming slots.
+          </p>
+          <div class="switch-row">
+            <div>
+              <b>Enable notifications</b>
+              <div class="muted">Uses browser notifications</div>
+            </div>
+            <button class="btn small" id="enableNotifyBtn">Enable</button>
+          </div>
+          <div class="switch-row">
+            <div>
+              <b>Notify on launch</b>
+              <div class="muted">Summary when you open the app</div>
+            </div>
+            <select id="notifyOnLaunch" style="width:auto; min-width:90px;">
+              <option value="yes">On</option>
+              <option value="no">Off</option>
+            </select>
+          </div>
+          <div class="switch-row">
+            <div>
+              <b>Remind before class</b>
+              <div class="muted">Minutes before start (while page is open)</div>
+            </div>
+            <input id="remindMinutes" type="number" min="0" max="120" value="15" style="width:90px;" />
+          </div>
+          <p class="muted" id="notifyStatus" style="margin:10px 0 0;">Status: checking…</p>
+        </div>
+
+        <div class="card">
+          <h2>Privacy PIN</h2>
+          <p class="muted" style="margin-top:0;">Optional lock so people need a PIN to open this page on your device.</p>
+          <div class="field">
+            <label for="newPin">Set / change PIN</label>
+            <input id="newPin" type="password" inputmode="numeric" placeholder="e.g. 4–8 digits" />
+          </div>
+          <div class="field">
+            <label for="newPin2">Confirm PIN</label>
+            <input id="newPin2" type="password" inputmode="numeric" placeholder="Repeat PIN" />
+          </div>
+          <div class="row">
+            <button class="btn primary" id="savePinBtn">Save PIN</button>
+            <button class="btn danger" id="removePinBtn">Remove PIN</button>
+          </div>
+          <p class="muted" style="margin-bottom:0; margin-top:12px;">
+            Note: this is a private local tool, not bank-level security.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>Backup & data</h2>
+          <p class="muted" style="margin-top:0;">Export a backup file, or import one later.</p>
+          <div class="row" style="margin-bottom:10px;">
+            <button class="btn primary" id="exportBtn">Export JSON</button>
+            <label class="btn" style="cursor:pointer;">
+              Import JSON
+              <input id="importFile" type="file" accept="application/json,.json" hidden />
+            </label>
+          </div>
+          <div class="row">
+            <button class="btn danger" id="wipeBtn">Delete all data</button>
+            <button class="btn ghost" id="lockNowBtn">Lock now</button>
+          </div>
+          <div class="footer-note" style="text-align:left; margin-top:16px;">
+            Storage key: <code>private-academy-notes-v1</code><br />
+            Works offline after you open this file once.<br />
+            Deploy on HTTPS for best notification support.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="footer-note">Single-file private site • memos + academy schedule • rainbow themes • local only</p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* ========= Storage helpers ========= */
+    const STORAGE_KEY = 'private-academy-notes-v1';
+    const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const THEMES = ['red','orange','yellow','green','blue','indigo','violet'];
+
+    const defaultData = () => ({
+      pinHash: null,
+      theme: 'indigo',
+      memos: [],
+      slots: [],
+      settings: {
+        notifyOnLaunch: true,
+        remindMinutes: 15
+      }
+    });
+
+    let data = loadData();
+    let unlocked = !data.pinHash;
+    let notifiedKeys = new Set(); // avoid spam same reminder in one session
+    let launchNotified = false;
+    let remindTimer = null;
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return defaultData();
+        const parsed = JSON.parse(raw);
+        const base = defaultData();
+        const slots = Array.isArray(parsed.slots) ? parsed.slots.map(migrateSlot) : [];
+        return {
+          ...base,
+          ...parsed,
+          memos: Array.isArray(parsed.memos) ? parsed.memos : [],
+          slots,
+          settings: {
+            ...base.settings,
+            ...(parsed.settings || {})
+          },
+          theme: THEMES.includes(parsed.theme) ? parsed.theme : 'indigo'
+        };
+      } catch (e) {
+        return defaultData();
+      }
+    }
+
+    function migrateSlot(s) {
+      // old format had only "time"
+      if (s && s.time && !s.start) {
+        return {
+          id: s.id,
+          day: s.day,
+          start: s.time,
+          end: s.end || s.time,
+          title: s.title || '',
+          note: s.note || ''
+        };
+      }
+      return {
+        id: s.id,
+        day: s.day,
+        start: s.start || s.time || '17:00',
+        end: s.end || s.start || s.time || '18:00',
+        title: s.title || '',
+        note: s.note || ''
+      };
+    }
+
+    function saveData() {
+      const toSave = {
+        pinHash: data.pinHash,
+        theme: data.theme,
+        memos: data.memos,
+        slots: data.slots,
+        settings: data.settings
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    }
+
+    // Works on https/localhost AND local file:// pages
+    function fallbackHash(str) {
+      // FNV-1a 32-bit + djb2 mix (deterministic, not crypto-strong)
+      let h1 = 2166136261;
+      let h2 = 5381;
+      for (let i = 0; i < str.length; i++) {
+        const c = str.charCodeAt(i);
+        h1 ^= c;
+        h1 = Math.imul(h1, 16777619);
+        h2 = ((h2 << 5) + h2) ^ c;
+      }
+      return (
+        'fb:' +
+        (h1 >>> 0).toString(16).padStart(8, '0') +
+        (h2 >>> 0).toString(16).padStart(8, '0') +
+        str.length.toString(16)
+      );
+    }
+
+    async function hashPin(pin) {
+      const payload = 'academy-salt::' + pin;
+      try {
+        if (window.isSecureContext && crypto && crypto.subtle) {
+          const enc = new TextEncoder().encode(payload);
+          const buf = await crypto.subtle.digest('SHA-256', enc);
+          return Array.from(new Uint8Array(buf))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+        }
+      } catch (e) {
+        console.warn('crypto.subtle unavailable, using fallback hash', e);
+      }
+      return fallbackHash(payload);
+    }
+
+    function uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    function formatDate(ts) {
+      try { return new Date(ts).toLocaleString(); } catch { return ''; }
+    }
+
+    function isToday(ts) {
+      const d = new Date(ts);
+      const n = new Date();
+      return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth() && d.getDate() === n.getDate();
+    }
+
+    function todayName() {
+      return DAYS[(new Date().getDay() + 6) % 7]; // JS: 0=Sun
+    }
+
+    function timeToMinutes(t) {
+      if (!t) return 0;
+      const [hh, mm] = String(t).split(':').map(Number);
+      return (hh || 0) * 60 + (mm || 0);
+    }
+
+    function formatRange(start, end) {
+      const s = formatNiceTime(start);
+      const e = formatNiceTime(end);
+      if (!start && !end) return '--:--';
+      if (start && end && start !== end) return s + ' ~ ' + e;
+      return s || e;
+    }
+
+    function formatNiceTime(t) {
+      if (!t) return '';
+      const [hh, mm] = String(t).split(':').map(Number);
+      if (Number.isNaN(hh)) return t;
+      const d = new Date();
+      d.setHours(hh, mm || 0, 0, 0);
+      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    /* ========= Theme ========= */
+    function applyTheme(name) {
+      const theme = THEMES.includes(name) ? name : 'indigo';
+      data.theme = theme;
+
+      // Safer than wiping all body classes
+      THEMES.forEach(t => document.body.classList.remove('theme-' + t));
+      document.body.classList.add('theme-' + theme);
+
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+      });
+      saveData();
+    }
+
+    document.getElementById('themeGrid').addEventListener('click', (e) => {
+      const btn = e.target.closest('.theme-btn');
+      if (!btn) return;
+      applyTheme(btn.dataset.theme);
+      toast('Theme: ' + btn.dataset.theme);
+    });
+
+    /* ========= Tabs ========= */
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    /* ========= Lock ========= */
+    const lockScreen = document.getElementById('lockScreen');
+    const app = document.getElementById('app');
+
+    function showApp() {
+      unlocked = true;
+      lockScreen.classList.remove('show');
+      app.hidden = false;
+      renderAll();
+      syncSettingsUI();
+      updateNotifyStatus();
+      startReminderLoop();
+      // launch notifications after unlock/open
+      setTimeout(() => maybeLaunchNotifications(), 400);
+    }
+
+    function showLock() {
+      unlocked = false;
+      app.hidden = true;
+      lockScreen.classList.add('show');
+      document.getElementById('pinInput').value = '';
+      setTimeout(() => document.getElementById('pinInput').focus(), 50);
+      stopReminderLoop();
+    }
+
+    async function tryUnlock() {
+      const pin = document.getElementById('pinInput').value.trim();
+      if (!data.pinHash) {
+        showApp();
+        return;
+      }
+      if (!pin) {
+        toast('Enter your PIN');
+        return;
+      }
+      try {
+        const h = await hashPin(pin);
+        if (h === data.pinHash) {
+          showApp();
+          toast('Unlocked');
+        } else {
+          toast('Wrong PIN');
+        }
+      } catch (e) {
+        console.error(e);
+        toast('PIN check failed in this browser mode');
+      }
+    }
+
+    document.getElementById('unlockBtn').addEventListener('click', tryUnlock);
+    document.getElementById('pinInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') tryUnlock();
+    });
+
+    /* ========= Notifications ========= */
+    function notificationsSupported() {
+      return 'Notification' in window;
+    }
+
+    function updateNotifyStatus() {
+      const el = document.getElementById('notifyStatus');
+      if (!el) return;
+      if (!notificationsSupported()) {
+        el.textContent = 'Status: notifications not supported in this browser';
+        return;
+      }
+      el.textContent = 'Status: permission = ' + Notification.permission +
+        ' • launch notify = ' + (data.settings.notifyOnLaunch ? 'on' : 'off') +
+        ' • remind ' + (data.settings.remindMinutes || 0) + ' min before';
+    }
+
+    async function enableNotifications() {
+      if (!notificationsSupported()) {
+        toast('Notifications not supported');
+        updateNotifyStatus();
+        return false;
+      }
+      try {
+        const perm = await Notification.requestPermission();
+        updateNotifyStatus();
+        if (perm === 'granted') {
+          toast('Notifications enabled');
+          return true;
+        }
+        toast('Permission: ' + perm);
+        return false;
+      } catch (e) {
+        toast('Could not enable notifications');
+        return false;
+      }
+    }
+
+    function sendNotification(title, body, tag) {
+      if (!notificationsSupported() || Notification.permission !== 'granted') return false;
+      try {
+        const n = new Notification(title, {
+          body: body || '',
+          tag: tag || undefined,
+          silent: false
+        });
+        // auto close after a bit on some platforms
+        setTimeout(() => { try { n.close(); } catch (_) {} }, 8000);
+        return true;
+      } catch (e) {
+        // file:// or restricted environments may throw
+        console.warn(e);
+        return false;
+      }
+    }
+
+    function getTodaySlots() {
+      const day = todayName();
+      return data.slots
+        .filter(s => s.day === day)
+        .sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+    }
+
+    function getNextSlot() {
+      const now = new Date();
+      const nowDay = todayName();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const dayIndex = DAYS.indexOf(nowDay);
+      const slots = sortedSlots();
+
+      for (let offset = 0; offset < 7; offset++) {
+        const d = DAYS[(dayIndex + offset) % 7];
+        const daySlots = slots.filter(s => s.day === d)
+          .sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+        for (const s of daySlots) {
+          const mins = timeToMinutes(s.start);
+          if (offset === 0 && mins < nowMin) continue;
+          return { slot: s, offset };
+        }
+      }
+      return null;
+    }
+
+    function maybeLaunchNotifications() {
+      if (launchNotified) return;
+      if (!data.settings.notifyOnLaunch) return;
+      if (!notificationsSupported() || Notification.permission !== 'granted') return;
+
+      launchNotified = true;
+      const today = getTodaySlots();
+      const next = getNextSlot();
+
+      if (today.length) {
+        const lines = today.map(s => formatRange(s.start, s.end) + ' — ' + (s.title || 'Class'));
+        sendNotification(
+          '📅 Today\'s academy schedule',
+          lines.join('\n'),
+          'launch-today'
+        );
+      } else {
+        sendNotification(
+          '📓 Private Academy open',
+          next
+            ? ('No classes today. Next: ' + next.slot.day + ' ' + formatRange(next.slot.start, next.slot.end) + ' ' + (next.slot.title || ''))
+            : 'No schedule slots yet. Add your classes!',
+          'launch-empty'
+        );
+      }
+
+      if (next && next.offset === 0) {
+        const minsLeft = timeToMinutes(next.slot.start) - (new Date().getHours() * 60 + new Date().getMinutes());
+        if (minsLeft >= 0 && minsLeft <= 60) {
+          sendNotification(
+            '⏰ Coming up soon',
+            (next.slot.title || 'Class') + ' at ' + formatRange(next.slot.start, next.slot.end) +
+              (minsLeft === 0 ? ' (starting now)' : ' (in ' + minsLeft + ' min)'),
+            'launch-soon'
+          );
+        }
+      }
+    }
+
+    function checkUpcomingReminders() {
+      if (!unlocked) return;
+      if (!notificationsSupported() || Notification.permission !== 'granted') return;
+
+      const minsBefore = Number(data.settings.remindMinutes || 0);
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const day = todayName();
+      const todaySlots = data.slots.filter(s => s.day === day);
+
+      todaySlots.forEach(s => {
+        const startMin = timeToMinutes(s.start);
+        const keySoon = day + '|' + s.id + '|soon';
+        const keyStart = day + '|' + s.id + '|start';
+
+        // Range-based: survives 15–30s polling without missing the minute
+        if (minsBefore > 0) {
+          const remindAt = startMin - minsBefore;
+          if (
+            !notifiedKeys.has(keySoon) &&
+            nowMin >= remindAt &&
+            nowMin < startMin
+          ) {
+            notifiedKeys.add(keySoon);
+            sendNotification(
+              '⏰ Class in ' + Math.max(1, startMin - nowMin) + ' min',
+              (s.title || 'Class') + ' • ' + formatRange(s.start, s.end),
+              keySoon
+            );
+          }
+        }
+
+        // Starting now (or just started within a short catch window)
+        if (
+          !notifiedKeys.has(keyStart) &&
+          nowMin >= startMin &&
+          nowMin <= startMin + 1
+        ) {
+          notifiedKeys.add(keyStart);
+          sendNotification(
+            '▶ Starting now',
+            (s.title || 'Class') + ' • ' + formatRange(s.start, s.end),
+            keyStart
+          );
+        }
+      });
+    }
+
+    function startReminderLoop() {
+      stopReminderLoop();
+      checkUpcomingReminders();
+      remindTimer = setInterval(checkUpcomingReminders, 15000); // every 15s
+    }
+    function stopReminderLoop() {
+      if (remindTimer) clearInterval(remindTimer);
+      remindTimer = null;
+    }
+
+    document.getElementById('enableNotifyBtn').addEventListener('click', async () => {
+      await enableNotifications();
+      maybeLaunchNotifications();
+    });
+
+    document.getElementById('notifyOnLaunch').addEventListener('change', (e) => {
+      data.settings.notifyOnLaunch = e.target.value === 'yes';
+      saveData();
+      updateNotifyStatus();
+      toast('Launch notifications ' + (data.settings.notifyOnLaunch ? 'on' : 'off'));
+    });
+
+    document.getElementById('remindMinutes').addEventListener('change', (e) => {
+      let v = parseInt(e.target.value, 10);
+      if (Number.isNaN(v) || v < 0) v = 0;
+      if (v > 120) v = 120;
+      data.settings.remindMinutes = v;
+      e.target.value = v;
+      saveData();
+      updateNotifyStatus();
+      toast('Remind ' + v + ' min before');
+    });
+
+    document.getElementById('testNotifyBtn').addEventListener('click', async () => {
+      if (!notificationsSupported()) {
+        toast('Not supported here');
+        return;
+      }
+      if (Notification.permission !== 'granted') {
+        const ok = await enableNotifications();
+        if (!ok) return;
+      }
+      const next = getNextSlot();
+      const ok = sendNotification(
+        '🔔 Test notification',
+        next
+          ? ('Next: ' + next.slot.day + ' ' + formatRange(next.slot.start, next.slot.end) + ' — ' + (next.slot.title || 'Class'))
+          : 'Notifications work! Add schedule slots to get class reminders.',
+        'test-' + Date.now()
+      );
+      toast(ok ? 'Test sent' : 'Could not show notification (try deployed HTTPS)');
+    });
+
+    function syncSettingsUI() {
+      document.getElementById('notifyOnLaunch').value = data.settings.notifyOnLaunch ? 'yes' : 'no';
+      document.getElementById('remindMinutes').value = data.settings.remindMinutes ?? 15;
+    }
+
+    /* ========= Memos ========= */
+    let editingMemoId = null;
+
+    function getFilteredMemos() {
+      const q = document.getElementById('memoSearch').value.trim().toLowerCase();
+      let list = [...data.memos].sort((a, b) => b.updatedAt - a.updatedAt);
+      if (!q) return list;
+      return list.filter(m =>
+        (m.title || '').toLowerCase().includes(q) ||
+        (m.body || '').toLowerCase().includes(q) ||
+        (m.tag || '').toLowerCase().includes(q)
+      );
+    }
+
+    function renderMemos() {
+      const list = document.getElementById('memoList');
+      const memos = getFilteredMemos();
+      document.getElementById('statMemos').textContent = data.memos.length;
+      document.getElementById('statTags').textContent = new Set(data.memos.map(m => (m.tag || '').trim().toLowerCase()).filter(Boolean)).size;
+      document.getElementById('statToday').textContent = data.memos.filter(m => isToday(m.updatedAt)).length;
+
+      if (!memos.length) {
+        list.innerHTML = '<div class="empty">No memos yet. Write one on the left ✍️</div>';
+        return;
+      }
+
+      list.innerHTML = memos.map(m => `
+        <div class="item ${editingMemoId === m.id ? 'selected' : ''}" data-id="${m.id}">
+          <div class="item-top">
+            <div>
+              <h3>${escapeHtml(m.title || 'Untitled')}</h3>
+              ${m.tag ? `<span class="pill">${escapeHtml(m.tag)}</span>` : ''}
+            </div>
+            <div class="row">
+              <button class="btn small" data-act="edit">Edit</button>
+              <button class="btn small danger" data-act="del">Delete</button>
+            </div>
+          </div>
+          <p style="margin-top:8px;">${escapeHtml(m.body || '')}</p>
+          <div class="meta">Updated ${formatDate(m.updatedAt)}</div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('.item').forEach(item => {
+        item.querySelector('[data-act="edit"]').addEventListener('click', () => editMemo(item.dataset.id));
+        item.querySelector('[data-act="del"]').addEventListener('click', () => deleteMemo(item.dataset.id));
+      });
+    }
+
+    function editMemo(id) {
+      const m = data.memos.find(x => x.id === id);
+      if (!m) return;
+      editingMemoId = id;
+      document.getElementById('memoTitle').value = m.title || '';
+      document.getElementById('memoBody').value = m.body || '';
+      document.getElementById('memoTag').value = m.tag || '';
+      document.getElementById('memoFormTitle').textContent = 'Edit memo';
+      document.getElementById('memoEditHint').textContent = 'Editing existing memo';
+      document.getElementById('saveMemoBtn').textContent = 'Update memo';
+      renderMemos();
+    }
+
+    function clearMemoForm() {
+      editingMemoId = null;
+      document.getElementById('memoTitle').value = '';
+      document.getElementById('memoBody').value = '';
+      document.getElementById('memoTag').value = '';
+      document.getElementById('memoFormTitle').textContent = 'New memo';
+      document.getElementById('memoEditHint').textContent = '';
+      document.getElementById('saveMemoBtn').textContent = 'Save memo';
+      renderMemos();
+    }
+
+    function saveMemo() {
+      const title = document.getElementById('memoTitle').value.trim();
+      const body = document.getElementById('memoBody').value.trim();
+      const tag = document.getElementById('memoTag').value.trim();
+      if (!title && !body) {
+        toast('Write something first');
+        return;
+      }
+      const now = Date.now();
+      if (editingMemoId) {
+        const m = data.memos.find(x => x.id === editingMemoId);
+        if (m) {
+          m.title = title;
+          m.body = body;
+          m.tag = tag;
+          m.updatedAt = now;
+        }
+        toast('Memo updated');
+      } else {
+        data.memos.push({ id: uid(), title, body, tag, createdAt: now, updatedAt: now });
+        toast('Memo saved');
+      }
+      saveData();
+      clearMemoForm();
+    }
+
+    function deleteMemo(id) {
+      if (!confirm('Delete this memo?')) return;
+      data.memos = data.memos.filter(m => m.id !== id);
+      if (editingMemoId === id) clearMemoForm();
+      saveData();
+      renderMemos();
+      toast('Memo deleted');
+    }
+
+    document.getElementById('saveMemoBtn').addEventListener('click', saveMemo);
+    document.getElementById('clearMemoBtn').addEventListener('click', clearMemoForm);
+    document.getElementById('memoSearch').addEventListener('input', renderMemos);
+
+    /* ========= Schedule ========= */
+    let editingSlotId = null;
+
+    function sortedSlots() {
+      return [...data.slots].sort((a, b) => {
+        const di = DAYS.indexOf(a.day) - DAYS.indexOf(b.day);
+        if (di !== 0) return di;
+        return timeToMinutes(a.start) - timeToMinutes(b.start);
+      });
+    }
+
+    function isSlotHappeningNow(s) {
+      if (s.day !== todayName()) return false;
+      const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+      const start = timeToMinutes(s.start);
+      const end = timeToMinutes(s.end || s.start);
+      return nowMin >= start && nowMin < (end === start ? end + 1 : end);
+    }
+
+    function renderSchedule() {
+      const wrap = document.getElementById('scheduleList');
+      const slots = sortedSlots();
+      document.getElementById('statSlots').textContent = slots.length;
+      document.getElementById('statDays').textContent = new Set(slots.map(s => s.day)).size;
+      document.getElementById('statNext').textContent = nextSlotLabel();
+
+      if (!slots.length) {
+        wrap.innerHTML = '<div class="empty">No schedule yet. Add class times on the left 📅</div>';
+        return;
+      }
+
+      const byDay = {};
+      DAYS.forEach(d => byDay[d] = []);
+      slots.forEach(s => {
+        if (!byDay[s.day]) byDay[s.day] = [];
+        byDay[s.day].push(s);
+      });
+
+      const today = todayName();
+      wrap.innerHTML = DAYS.filter(d => byDay[d].length).map(day => `
+        <div class="schedule-day" id="day-${day}">
+          <h3>${day}${day === today ? ' • today' : ''}</h3>
+          ${byDay[day].map(s => `
+            <div class="slot ${editingSlotId === s.id ? 'selected' : ''} ${isSlotHappeningNow(s) ? 'now' : ''}">
+              <div class="time">${escapeHtml(formatRange(s.start, s.end))}</div>
+              <div class="title">${escapeHtml(s.title || 'Untitled')}${isSlotHappeningNow(s) ? ' • now' : ''}</div>
+              <div class="row">
+                <button class="btn small" data-edit="${s.id}">Edit</button>
+                <button class="btn small danger" data-del="${s.id}">Del</button>
+              </div>
+              ${s.note ? `<div class="note">${escapeHtml(s.note)}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+
+      wrap.querySelectorAll('[data-edit]').forEach(btn => {
+        btn.addEventListener('click', () => editSlot(btn.getAttribute('data-edit')));
+      });
+      wrap.querySelectorAll('[data-del]').forEach(btn => {
+        btn.addEventListener('click', () => deleteSlot(btn.getAttribute('data-del')));
+      });
+    }
+
+    function nextSlotLabel() {
+      const next = getNextSlot();
+      if (!next) return '—';
+      const label = (next.slot.title || 'Class').slice(0, 10);
+      return next.offset === 0 ? label : next.slot.day.slice(0, 3);
+    }
+
+    function editSlot(id) {
+      const s = data.slots.find(x => x.id === id);
+      if (!s) return;
+      editingSlotId = id;
+      document.getElementById('slotDay').value = s.day;
+      document.getElementById('slotStart').value = s.start || '17:00';
+      document.getElementById('slotEnd').value = s.end || s.start || '18:00';
+      document.getElementById('slotTitle').value = s.title || '';
+      document.getElementById('slotNote').value = s.note || '';
+      document.getElementById('slotEditHint').textContent = 'Editing slot';
+      document.getElementById('saveSlotBtn').textContent = 'Update slot';
+      renderSchedule();
+    }
+
+    function clearSlotForm() {
+      editingSlotId = null;
+      document.getElementById('slotTitle').value = '';
+      document.getElementById('slotNote').value = '';
+      document.getElementById('slotEditHint').textContent = '';
+      document.getElementById('saveSlotBtn').textContent = 'Add to schedule';
+      renderSchedule();
+    }
+
+    function saveSlot() {
+      const day = document.getElementById('slotDay').value;
+      const start = document.getElementById('slotStart').value;
+      let end = document.getElementById('slotEnd').value;
+      const title = document.getElementById('slotTitle').value.trim();
+      const note = document.getElementById('slotNote').value.trim();
+      if (!title) {
+        toast('Add a class name');
+        return;
+      }
+      if (!start) {
+        toast('Add a start time');
+        return;
+      }
+      if (!end) end = start;
+      if (timeToMinutes(end) < timeToMinutes(start)) {
+        toast('End time should be after start');
+        return;
+      }
+      if (editingSlotId) {
+        const s = data.slots.find(x => x.id === editingSlotId);
+        if (s) {
+          s.day = day; s.start = start; s.end = end; s.title = title; s.note = note;
+        }
+        toast('Slot updated');
+      } else {
+        data.slots.push({ id: uid(), day, start, end, title, note });
+        toast('Slot added');
+      }
+      saveData();
+      clearSlotForm();
+    }
+
+    function deleteSlot(id) {
+      if (!confirm('Delete this schedule slot?')) return;
+      data.slots = data.slots.filter(s => s.id !== id);
+      if (editingSlotId === id) clearSlotForm();
+      saveData();
+      renderSchedule();
+      toast('Slot deleted');
+    }
+
+    document.getElementById('saveSlotBtn').addEventListener('click', saveSlot);
+    document.getElementById('clearSlotBtn').addEventListener('click', clearSlotForm);
+    document.getElementById('jumpTodayBtn').addEventListener('click', () => {
+      const el = document.getElementById('day-' + todayName());
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      else toast('No classes today');
+    });
+
+    /* ========= Settings ========= */
+    document.getElementById('savePinBtn').addEventListener('click', async () => {
+      const a = document.getElementById('newPin').value.trim();
+      const b = document.getElementById('newPin2').value.trim();
+      if (!a || a.length < 4) {
+        toast('PIN should be at least 4 characters');
+        return;
+      }
+      if (a !== b) {
+        toast('PINs do not match');
+        return;
+      }
+      try {
+        data.pinHash = await hashPin(a);
+        saveData();
+        document.getElementById('newPin').value = '';
+        document.getElementById('newPin2').value = '';
+        toast('PIN saved');
+      } catch (e) {
+        console.error(e);
+        toast('Could not save PIN in this browser mode');
+      }
+    });
+
+    document.getElementById('removePinBtn').addEventListener('click', () => {
+      if (!data.pinHash) {
+        toast('No PIN set');
+        return;
+      }
+      if (!confirm('Remove PIN lock?')) return;
+      data.pinHash = null;
+      saveData();
+      toast('PIN removed');
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const payload = {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        theme: data.theme,
+        settings: data.settings,
+        memos: data.memos,
+        slots: data.slots
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'private-academy-backup.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('Exported backup');
+    });
+
+    document.getElementById('importFile').addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const json = JSON.parse(text);
+        if (!Array.isArray(json.memos) || !Array.isArray(json.slots)) {
+          toast('Invalid backup file');
+          return;
+        }
+        if (!confirm('Import will replace current memos & schedule. Continue?')) return;
+        data.memos = json.memos;
+        data.slots = json.slots.map(migrateSlot);
+        if (json.theme && THEMES.includes(json.theme)) {
+          data.theme = json.theme;
+          applyTheme(data.theme);
+        }
+        if (json.settings) {
+          data.settings = { ...data.settings, ...json.settings };
+        }
+        saveData();
+        clearMemoForm();
+        clearSlotForm();
+        syncSettingsUI();
+        renderAll();
+        toast('Imported backup');
+      } catch {
+        toast('Could not read file');
+      }
+      e.target.value = '';
+    });
+
+    document.getElementById('wipeBtn').addEventListener('click', () => {
+      if (!confirm('Delete ALL memos and schedule on this device?')) return;
+      if (!confirm('Really sure? This cannot be undone.')) return;
+      const pinHash = data.pinHash;
+      const theme = data.theme;
+      const settings = data.settings;
+      data = defaultData();
+      data.pinHash = pinHash;
+      data.theme = theme;
+      data.settings = settings;
+      saveData();
+      clearMemoForm();
+      clearSlotForm();
+      renderAll();
+      toast('All data deleted');
+    });
+
+    document.getElementById('lockNowBtn').addEventListener('click', () => {
+      if (!data.pinHash) {
+        toast('Set a PIN first');
+        return;
+      }
+      launchNotified = false; // allow launch notify again after next unlock
+      showLock();
+    });
+
+    /* ========= Utils ========= */
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function renderAll() {
+      renderMemos();
+      renderSchedule();
+    }
+
+    // boot
+    applyTheme(data.theme || 'indigo');
+    if (data.pinHash) showLock();
+    else showApp();
+  </script>
+</body>
+</html>
