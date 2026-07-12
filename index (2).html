@@ -21,7 +21,6 @@
       --glow: rgba(124,156,255,.18);
     }
 
-    /* Rainbow themes */
     body.theme-red {
       --accent: #ff4d6d;
       --accent2: #ff8fa3;
@@ -239,7 +238,8 @@
       border-radius: 14px;
       padding: 12px;
     }
-    .item.selected {
+    .item.selected,
+    .slot.selected {
       border-color: color-mix(in srgb, var(--accent) 55%, transparent);
       box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 15%, transparent);
     }
@@ -492,7 +492,6 @@
       </div>
     </div>
 
-    <!-- MEMOS -->
     <section class="panel active" id="panel-memos">
       <div class="grid">
         <div class="card">
@@ -533,7 +532,6 @@
       </div>
     </section>
 
-    <!-- SCHEDULE -->
     <section class="panel" id="panel-schedule">
       <div class="grid">
         <div class="card">
@@ -594,7 +592,6 @@
       </div>
     </section>
 
-    <!-- SETTINGS -->
     <section class="panel" id="panel-settings">
       <div class="grid">
         <div class="card">
@@ -692,7 +689,6 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    /* ========= Storage helpers ========= */
     const STORAGE_KEY = 'private-academy-notes-v1';
     const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
     const THEMES = ['red','orange','yellow','green','blue','indigo','violet'];
@@ -710,7 +706,7 @@
 
     let data = loadData();
     let unlocked = !data.pinHash;
-    let notifiedKeys = new Set(); // avoid spam same reminder in one session
+    let notifiedKeys = new Set();
     let launchNotified = false;
     let remindTimer = null;
 
@@ -738,7 +734,6 @@
     }
 
     function migrateSlot(s) {
-      // old format had only "time"
       if (s && s.time && !s.start) {
         return {
           id: s.id,
@@ -770,10 +765,39 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     }
 
+    // Works on https/localhost AND local file:// pages
+    function fallbackHash(str) {
+      // FNV-1a 32-bit + djb2 mix (deterministic, not crypto-strong)
+      let h1 = 2166136261;
+      let h2 = 5381;
+      for (let i = 0; i < str.length; i++) {
+        const c = str.charCodeAt(i);
+        h1 ^= c;
+        h1 = Math.imul(h1, 16777619);
+        h2 = ((h2 << 5) + h2) ^ c;
+      }
+      return (
+        'fb:' +
+        (h1 >>> 0).toString(16).padStart(8, '0') +
+        (h2 >>> 0).toString(16).padStart(8, '0') +
+        str.length.toString(16)
+      );
+    }
+
     async function hashPin(pin) {
-      const enc = new TextEncoder().encode('academy-salt::' + pin);
-      const buf = await crypto.subtle.digest('SHA-256', enc);
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      const payload = 'academy-salt::' + pin;
+      try {
+        if (window.isSecureContext && crypto && crypto.subtle) {
+          const enc = new TextEncoder().encode(payload);
+          const buf = await crypto.subtle.digest('SHA-256', enc);
+          return Array.from(new Uint8Array(buf))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+        }
+      } catch (e) {
+        console.warn('crypto.subtle unavailable, using fallback hash', e);
+      }
+      return fallbackHash(payload);
     }
 
     function uid() {
@@ -799,7 +823,7 @@
     }
 
     function todayName() {
-      return DAYS[(new Date().getDay() + 6) % 7]; // JS: 0=Sun
+      return DAYS[(new Date().getDay() + 6) % 7];
     }
 
     function timeToMinutes(t) {
@@ -825,11 +849,14 @@
       return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     }
 
-    /* ========= Theme ========= */
     function applyTheme(name) {
       const theme = THEMES.includes(name) ? name : 'indigo';
       data.theme = theme;
-      document.body.className = 'theme-' + theme;
+
+      // Safer than wiping all body classes
+      THEMES.forEach(t => document.body.classList.remove('theme-' + t));
+      document.body.classList.add('theme-' + theme);
+
       document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.theme === theme);
       });
@@ -843,7 +870,6 @@
       toast('Theme: ' + btn.dataset.theme);
     });
 
-    /* ========= Tabs ========= */
     document.querySelectorAll('.tab').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
@@ -853,7 +879,6 @@
       });
     });
 
-    /* ========= Lock ========= */
     const lockScreen = document.getElementById('lockScreen');
     const app = document.getElementById('app');
 
@@ -865,7 +890,6 @@
       syncSettingsUI();
       updateNotifyStatus();
       startReminderLoop();
-      // launch notifications after unlock/open
       setTimeout(() => maybeLaunchNotifications(), 400);
     }
 
@@ -888,12 +912,17 @@
         toast('Enter your PIN');
         return;
       }
-      const h = await hashPin(pin);
-      if (h === data.pinHash) {
-        showApp();
-        toast('Unlocked');
-      } else {
-        toast('Wrong PIN');
+      try {
+        const h = await hashPin(pin);
+        if (h === data.pinHash) {
+          showApp();
+          toast('Unlocked');
+        } else {
+          toast('Wrong PIN');
+        }
+      } catch (e) {
+        console.error(e);
+        toast('PIN check failed in this browser mode');
       }
     }
 
@@ -902,7 +931,6 @@
       if (e.key === 'Enter') tryUnlock();
     });
 
-    /* ========= Notifications ========= */
     function notificationsSupported() {
       return 'Notification' in window;
     }
@@ -948,11 +976,9 @@
           tag: tag || undefined,
           silent: false
         });
-        // auto close after a bit on some platforms
         setTimeout(() => { try { n.close(); } catch (_) {} }, 8000);
         return true;
       } catch (e) {
-        // file:// or restricted environments may throw
         console.warn(e);
         return false;
       }
@@ -1027,9 +1053,8 @@
     function checkUpcomingReminders() {
       if (!unlocked) return;
       if (!notificationsSupported() || Notification.permission !== 'granted') return;
-      const minsBefore = Number(data.settings.remindMinutes || 0);
-      if (minsBefore <= 0) return;
 
+      const minsBefore = Number(data.settings.remindMinutes || 0);
       const now = new Date();
       const nowMin = now.getHours() * 60 + now.getMinutes();
       const day = todayName();
@@ -1037,24 +1062,32 @@
 
       todaySlots.forEach(s => {
         const startMin = timeToMinutes(s.start);
-        const endMin = timeToMinutes(s.end || s.start);
         const keySoon = day + '|' + s.id + '|soon';
         const keyStart = day + '|' + s.id + '|start';
 
-        // remind X minutes before
-        if (nowMin === startMin - minsBefore || (nowMin > startMin - minsBefore && nowMin < startMin && !notifiedKeys.has(keySoon))) {
-          if (!notifiedKeys.has(keySoon) && nowMin >= startMin - minsBefore && nowMin < startMin) {
+        // Range-based: survives 15–30s polling without missing the minute
+        if (minsBefore > 0) {
+          const remindAt = startMin - minsBefore;
+          if (
+            !notifiedKeys.has(keySoon) &&
+            nowMin >= remindAt &&
+            nowMin < startMin
+          ) {
             notifiedKeys.add(keySoon);
             sendNotification(
-              '⏰ Class in ' + (startMin - nowMin) + ' min',
+              '⏰ Class in ' + Math.max(1, startMin - nowMin) + ' min',
               (s.title || 'Class') + ' • ' + formatRange(s.start, s.end),
               keySoon
             );
           }
         }
 
-        // starting now
-        if (nowMin === startMin && !notifiedKeys.has(keyStart)) {
+        // Starting now (or just started within a 2-min catch window)
+        if (
+          !notifiedKeys.has(keyStart) &&
+          nowMin >= startMin &&
+          nowMin <= startMin + 1
+        ) {
           notifiedKeys.add(keyStart);
           sendNotification(
             '▶ Starting now',
@@ -1062,16 +1095,13 @@
             keyStart
           );
         }
-
-        // currently happening highlight uses renderSchedule
-        void endMin;
       });
     }
 
     function startReminderLoop() {
       stopReminderLoop();
       checkUpcomingReminders();
-      remindTimer = setInterval(checkUpcomingReminders, 30000); // every 30s
+      remindTimer = setInterval(checkUpcomingReminders, 15000);
     }
     function stopReminderLoop() {
       if (remindTimer) clearInterval(remindTimer);
@@ -1126,7 +1156,6 @@
       document.getElementById('remindMinutes').value = data.settings.remindMinutes ?? 15;
     }
 
-    /* ========= Memos ========= */
     let editingMemoId = null;
 
     function getFilteredMemos() {
@@ -1238,7 +1267,6 @@
     document.getElementById('clearMemoBtn').addEventListener('click', clearMemoForm);
     document.getElementById('memoSearch').addEventListener('input', renderMemos);
 
-    /* ========= Schedule ========= */
     let editingSlotId = null;
 
     function sortedSlots() {
@@ -1382,7 +1410,6 @@
       else toast('No classes today');
     });
 
-    /* ========= Settings ========= */
     document.getElementById('savePinBtn').addEventListener('click', async () => {
       const a = document.getElementById('newPin').value.trim();
       const b = document.getElementById('newPin2').value.trim();
@@ -1394,11 +1421,16 @@
         toast('PINs do not match');
         return;
       }
-      data.pinHash = await hashPin(a);
-      saveData();
-      document.getElementById('newPin').value = '';
-      document.getElementById('newPin2').value = '';
-      toast('PIN saved');
+      try {
+        data.pinHash = await hashPin(a);
+        saveData();
+        document.getElementById('newPin').value = '';
+        document.getElementById('newPin2').value = '';
+        toast('PIN saved');
+      } catch (e) {
+        console.error(e);
+        toast('Could not save PIN in this browser mode');
+      }
     });
 
     document.getElementById('removePinBtn').addEventListener('click', () => {
@@ -1485,16 +1517,15 @@
         toast('Set a PIN first');
         return;
       }
-      launchNotified = false; // allow launch notify again after next unlock
+      launchNotified = false;
       showLock();
     });
 
-    /* ========= Utils ========= */
     function escapeHtml(str) {
       return String(str)
         .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
+        .replaceAll('<', '<')
+        .replaceAll('>', '>')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
     }
@@ -1504,10 +1535,9 @@
       renderSchedule();
     }
 
-    // boot
     applyTheme(data.theme || 'indigo');
     if (data.pinHash) showLock();
     else showApp();
   </script>
 </body>
-</html>
+  </html>
