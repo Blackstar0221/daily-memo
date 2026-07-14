@@ -479,8 +479,8 @@
 </head>
 <body class="theme-indigo">
   <!--
-    Optional baked-in backup. "Download HTML with my data" rewrites this block.
-    Leave empty object for a clean install.
+    Optional baked-in backup. "Download HTML with my data" rewrites this block safely.
+    Leave as {} for a clean install.
   -->
   <script id="embedded-data" type="application/json">{}</script>
 
@@ -626,11 +626,12 @@
             <b>How saving works</b>
             <div class="muted" style="margin:0;">
               Every memo and schedule change is auto-saved in this browser’s <b>localStorage</b>.
-              Open the same file again in Chrome (or another tab on this device) and your data is still there.
+              Open the same file again in Chrome (same device/profile) and your data is still there.
+              For real Git: Export JSON or Download HTML, then commit that file to your repo.
             </div>
           </div>
           <p class="muted" style="margin-top:0;">
-            Extra safety: export JSON, or download a full HTML copy with your data baked in.
+            Extra safety: export JSON, or download a full HTML copy with your data baked in (safe for Git).
           </p>
           <div class="row" style="margin-bottom:10px;">
             <button class="btn primary" id="exportBtn">Export JSON</button>
@@ -649,7 +650,7 @@
           <div class="footer-note" style="text-align:left; margin-top:16px;">
             Storage key: <code>private-academy-notes-v1</code><br />
             Same browser + same device = data stays after refresh/reopen.<br />
-            Different computers need Export / Download HTML / Import.<br />
+            Different computers / real Git → Export or Download HTML, then put the file in your repo.<br />
             Deploy on HTTPS for best notification support.
           </div>
         </div>
@@ -722,7 +723,7 @@
       </div>
     </section>
 
-    <p class="footer-note">Single-file private site • auto-saves memos + schedule • rainbow themes • local only</p>
+    <p class="footer-note">Single-file private site • auto-saves memos + schedule • rainbow themes • local + Git-friendly export</p>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -795,7 +796,7 @@
         console.warn('localStorage read failed', e);
       }
 
-      // 2) Fallback: data baked into the HTML file
+      // 2) Fallback: data baked into the HTML file (great for Git / USB / other PCs)
       const embedded = readEmbeddedData();
       if (embedded) {
         const normalized = normalizeLoaded(embedded);
@@ -860,7 +861,6 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
         suppressStorageEvent = false;
 
-        // Verify write succeeded
         const check = localStorage.getItem(STORAGE_KEY);
         if (!check) throw new Error('save verify failed');
 
@@ -1059,7 +1059,7 @@
       }
     });
 
-    // Save again when tab is hidden / page closed (extra safety)
+    // Extra save when tab is hidden / page closed
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         try { saveData(); } catch (_) {}
@@ -1601,24 +1601,37 @@
       a.href = url;
       a.download = 'private-academy-backup.json';
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
       toast('Exported backup JSON');
     });
 
     document.getElementById('downloadHtmlBtn').addEventListener('click', () => {
-      // Bake current data into a full HTML file the user can reopen anywhere
+      // Bake current data into a full HTML file the user can reopen anywhere / put in Git
       saveData();
       const payload = exportPayload();
-      const json = JSON.stringify(payload);
-      let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      // IMPORTANT: escape < so </script> inside memos cannot break the HTML file
+      const json = JSON.stringify(payload).replace(/</g, '\\u003c');
 
-      // Replace embedded-data script contents
-      html = html.replace(
-        /<script id="embedded-data" type="application\/json">[\s\S]*?<\/script>/,
-        '<script id="embedded-data" type="application/json">' + json + '</script>'
-      );
+      const memoList = document.getElementById('memoList');
+      const scheduleList = document.getElementById('scheduleList');
+      const oldMemo = memoList.innerHTML;
+      const oldSched = scheduleList.innerHTML;
+      // Clean temporary rendered lists so the downloaded file stays small & clean
+      memoList.innerHTML = '';
+      scheduleList.innerHTML = '';
 
-      // Avoid nesting issues if browser serializes weirdly
+      let html;
+      try {
+        html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        html = html.replace(
+          /<script id="embedded-data" type="application\/json">[\s\S]*?<\/script>/,
+          '<script id="embedded-data" type="application/json">' + json + '</script>'
+        );
+      } finally {
+        memoList.innerHTML = oldMemo;
+        scheduleList.innerHTML = oldSched;
+      }
+
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -1626,8 +1639,9 @@
       a.href = url;
       a.download = 'private-memos-academy-' + stamp + '.html';
       a.click();
-      URL.revokeObjectURL(url);
-      toast('Downloaded HTML with your data inside');
+      // Delay revoke so Chrome actually finishes the download
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      toast('Downloaded HTML with your data inside (Git-safe)');
     });
 
     document.getElementById('importFile').addEventListener('change', async (e) => {
@@ -1650,7 +1664,6 @@
         if (json.settings) {
           data.settings = { ...data.settings, ...json.settings };
         }
-        // Optional: restore PIN from backup if present
         if (typeof json.pinHash !== 'undefined') {
           data.pinHash = json.pinHash;
         }
@@ -1695,8 +1708,8 @@
     function escapeHtml(str) {
       return String(str)
         .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
+        .replaceAll('<', '<')
+        .replaceAll('>', '>')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
     }
@@ -1719,4 +1732,4 @@
     }
   </script>
 </body>
-</html>
+        </html>
